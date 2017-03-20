@@ -22,8 +22,10 @@ Function Get-WLANPassword{
         try{
             $WLANProfilePassword = (((netsh.exe wlan show profiles name="$WLANProfileName" key=clear | select-string -Pattern "Key Content") -split ":")[1]).Trim()
         }Catch{
-            Write-Warning "[!] The password is not stored in this profile"
+            Write-Warning "The password for $WLANProfileName is not stored in this profile, so it will be skipped"
+            break
         }
+
         #Build the object and add this to an array
         $WLANProfileObject = New-Object PSCustomobject 
         $WLANProfileObject | Add-Member -Type NoteProperty -Name "ProfileName" -Value $WLANProfileName
