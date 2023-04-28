@@ -1,7 +1,7 @@
-Function Get-WLANPassword{
+Function Get-WIFIPassword{
     <#
         .SYNOPSIS
-        This function displays all stored WLAN passwords on the client
+        This function displays all stored WIFI passwords on the client
         .DESCRIPTION
         This function gets the output of netsh command and will trim it to display all SSID`s and also the passwords.
         If a profile has no password it will inform the user.
@@ -35,4 +35,3 @@ Function Get-WLANPassword{
     }
     Write-Output $WLANProfileObjects
 }
-Get-WLANPassword
