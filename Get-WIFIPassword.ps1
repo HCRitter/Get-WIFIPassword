@@ -14,43 +14,40 @@ function Get-WifiPassword {
     )
     
     begin {
-        #Exports all Wifi profiles to the current directory
         try {
-            $WifiProfileExport = $(netsh wlan export profile key=clear)
+            # Export all Wifi profiles and collect their XML file paths
+            $netshOutput = $(netsh wlan export profile key=clear)
+            $XmlFilePaths = foreach($line in $netshOutput){
+                if($line -match '\"(.*?\\.*?\.xml)(?=\")'){
+                    $matches[1]
+                }
+            }
         }
         catch {
-            Write-Error $PSItem.Exception.Message
-            Write-Error "Could not export the Wifi profiles"
+            Write-Error "Failed to export Wifi profiles: $($_.Exception.Message)"
             return
-            
-        }
-        #Collect all profile XML export paths
-        $WifiProfileExportPaths = foreach($ExportPath in $WifiProfileExport){
-            if($ExportPath -match '\"(.*?\\.*?\.xml)(?=\")'){
-                $matches[1]
-            }
         }
         
     }
     
     process {
-        foreach($WifiProfileExportPath in $WifiProfileExportPaths){
-            #read the XMLFile
-            $XMLFile = (select-xml -path $WifiProfileExportPath -xpath "/").Node.WLANProfile
-            [PSCustomObject]@{
-                Name = $XMLFile.name
-                Password = $Password = $XMLFile.MSM.Security.SharedKey.KeyMaterial
-                Succeed = [bool]$Password
-            }
-            #remove the created xml file
+        foreach ($XmlFilePath in $XmlFilePaths) {
             try {
-                remove-item $WifiProfileExportPath -ErrorAction Stop
+                # Read the XML file and extract the Wifi profile name and password
+                $Xml = [xml](Get-Content -Path $XmlFilePath)
+
+                # Output the profile name, password, and whether the operation succeeded
+                [PSCustomObject]@{
+                    Name = $Xml.WLANProfile.Name
+                    Password = $Password = $Xml.WLANProfile.MSM.Security.SharedKey.KeyMaterial
+                    Succeed = [bool]$Password
+                }
+                # Remove the XML file
+                Remove-Item $XmlFilePath -ErrorAction Stop
             }
             catch {
-                Write-Error $PSItem.Exception.Message
-                Write-Error "Could not delete $WifiProfileExportPath"
+                Write-Error "Failed to read Wifi profile from '$XmlFilePath': $($_.Exception.Message)"
             }
-            
         }
     }
     
