@@ -2,7 +2,7 @@
 # Name:		Get-WifiPassword
 # Author:	HCRitter
 # Date:		2023-05-25
-# Version:	1.0
+# Version:	1.1
 # Comment:	* forked from https://github.com/HCRitter/Get-WIFIPassword on 2023-05-25
 #           * improved file handling
 #======================================================================================================================
@@ -25,7 +25,8 @@ function Get-WifiPassword {
     begin {
         try {
             # Export all Wifi profiles and collect their XML file paths
-            $ExportPath = New-Item -Path $HOME -Name ('GetWifiPassword' + '_' + (New-Guid).Guid) -ItemType Directory
+            $ExportPath = New-Item -Path $HOME -Name ('GetWifiPassword_' + (New-Guid).Guid) -ItemType Directory
+            $CurrentPath = (Get-Location).path
             Set-Location $ExportPath
             netsh wlan export profile key=clear
             $XmlFilePaths = Get-ChildItem -Path $ExportPath -File
@@ -57,7 +58,7 @@ function Get-WifiPassword {
     }
     
     end {
-        Set-Location $Home
+        Set-Location $CurrentPath
         Remove-Item $ExportPath -Confirm:$false -Recurse
     }
 }
