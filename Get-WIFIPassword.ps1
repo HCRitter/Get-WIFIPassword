@@ -1,3 +1,12 @@
+#======================================================================================================================
+# Name:		Get-WifiPassword
+# Author:	HCRitter
+# Date:		2023-05-25
+# Version:	1.1
+# Comment:	* forked from https://github.com/HCRitter/Get-WIFIPassword on 2023-05-25
+#           * improved file handling
+#======================================================================================================================
+
 <#
     .SYNOPSIS
     This function displays all stored WIFI passwords on the client
@@ -16,12 +25,11 @@ function Get-WifiPassword {
     begin {
         try {
             # Export all Wifi profiles and collect their XML file paths
-            $netshOutput = $(netsh wlan export profile key=clear)
-            $XmlFilePaths = foreach($line in $netshOutput){
-                if($line -match '\"(.*?\\.*?\.xml)(?=\")'){
-                    $matches[1]
-                }
-            }
+            $ExportPath = New-Item -Path $HOME -Name ('GetWifiPassword_' + (New-Guid).Guid) -ItemType Directory
+            $CurrentPath = (Get-Location).path
+            Set-Location $ExportPath
+            netsh wlan export profile key=clear
+            $XmlFilePaths = Get-ChildItem -Path $ExportPath -File
         }
         catch {
             Write-Error "Failed to export Wifi profiles: $($_.Exception.Message)"
@@ -38,12 +46,10 @@ function Get-WifiPassword {
 
                 # Output the profile name, password, and whether the operation succeeded
                 [PSCustomObject]@{
-                    Name = $Xml.WLANProfile.Name
+                    Name     = $Xml.WLANProfile.Name
                     Password = $Password = $Xml.WLANProfile.MSM.Security.SharedKey.KeyMaterial
-                    Succeed = [bool]$Password
+                    Succeed  = [bool]$Password
                 }
-                # Remove the XML file
-                Remove-Item $XmlFilePath -ErrorAction Stop
             }
             catch {
                 Write-Error "Failed to read Wifi profile from '$XmlFilePath': $($_.Exception.Message)"
@@ -52,6 +58,7 @@ function Get-WifiPassword {
     }
     
     end {
-        
+        Set-Location $CurrentPath
+        Remove-Item $ExportPath -Confirm:$false -Recurse
     }
 }
