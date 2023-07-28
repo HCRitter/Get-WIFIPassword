@@ -42,7 +42,7 @@ function Get-WifiPassword {
         foreach ($XmlFilePath in $XmlFilePaths) {
             try {
                 # Read the XML file and extract the Wifi profile name and password
-                $Xml = [xml](Get-Content -Path $XmlFilePath)
+                $Xml = [xml]::new()).Load((Convert-Path -LiteralPath $xmlPath))
 
                 # Output the profile name, password, and whether the operation succeeded
                 [PSCustomObject]@{
